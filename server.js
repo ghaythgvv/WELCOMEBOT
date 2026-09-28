@@ -63,6 +63,7 @@ function publicSettings() {
   const s = settings.get();
   return {
     welcomeMessage: s.welcomeMessage,
+    additionalMessage: s.additionalMessage,
     musicVolume: s.musicVolume,
     welcomeVolume: s.welcomeVolume,
     persistent: settings.PERSISTENT,
@@ -75,14 +76,15 @@ function publicSettings() {
 app.get('/api/settings', (req, res) => res.json(publicSettings()));
 
 app.post('/api/settings', (req, res) => {
-  const { welcomeMessage, musicVolume, welcomeVolume } = req.body || {};
+  const { welcomeMessage, additionalMessage, musicVolume, welcomeVolume } = req.body || {};
   const patch = {};
 
-  if (welcomeMessage !== undefined) {
-    const text = String(welcomeMessage).trim();
-    if (!text) return res.status(400).json({ error: 'Welcome message cannot be empty' });
-    if (text.length > 200) return res.status(400).json({ error: 'Welcome message must be 200 characters or less' });
-    patch.welcomeMessage = text;
+  for (const [key, value] of [['welcomeMessage', welcomeMessage], ['additionalMessage', additionalMessage]]) {
+    if (value === undefined) continue;
+    const text = String(value).trim();
+    if (!text) return res.status(400).json({ error: 'Messages cannot be empty' });
+    if (text.length > 200) return res.status(400).json({ error: 'Messages must be 200 characters or less' });
+    patch[key] = text;
   }
   if (musicVolume !== undefined) patch.musicVolume = Math.min(1, Math.max(0, Number(musicVolume) || 0));
   if (welcomeVolume !== undefined) patch.welcomeVolume = Math.min(2, Math.max(0, Number(welcomeVolume) || 0));

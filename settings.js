@@ -11,6 +11,7 @@ fs.mkdirSync(MUSIC_DIR, { recursive: true });
 
 const defaults = {
   welcomeMessage: config.WELCOME_MESSAGE,
+  additionalMessage: config.ADDITIONAL_MESSAGE,
   musicVolume: config.MUSIC_VOLUME,
   welcomeVolume: config.WELCOME_VOLUME,
   musicFile: null, // filename inside MUSIC_DIR (set by panel upload)

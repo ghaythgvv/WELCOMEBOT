@@ -25,7 +25,7 @@ const client = new Client({
 // ---------- State ----------
 let connection = null;
 let player = null;
-let pendingWelcomes = 0; // how many welcome messages are still queued
+let queue = []; // messages waiting to be spoken: 'first' or 'additional'
 let playingWelcome = false;
 
 // ---------- Audio helpers ----------
@@ -41,10 +41,11 @@ function playMusic() {
   player.play(resource);
 }
 
-async function playWelcome() {
+async function playWelcome(kind) {
   playingWelcome = true;
+  const text = kind === 'additional' ? settings.get().additionalMessage : settings.get().welcomeMessage;
   try {
-    const b64 = await googleTTS.getAudioBase64(settings.get().welcomeMessage, {
+    const b64 = await googleTTS.getAudioBase64(text, {
       lang: config.TTS_LANG,
       slow: false,
       host: 'https://translate.google.com',
@@ -67,9 +68,9 @@ async function playWelcome() {
 // Decides what to play next: queued welcome first, otherwise looping music
 function playNext() {
   if (!player) return;
-  if (pendingWelcomes > 0) {
-    pendingWelcomes--;
-    playWelcome();
+  if (queue.length > 0) {
+    // Playing a new resource stops the music; when the phrase ends, the music restarts from the beginning
+    playWelcome(queue.shift());
   } else {
     playingWelcome = false;
     playMusic();
@@ -118,7 +119,7 @@ async function ensureConnected(guild, channel) {
 }
 
 function cleanup() {
-  pendingWelcomes = 0;
+  queue = [];
   playingWelcome = false;
   if (player) {
     player.removeAllListeners();
@@ -137,6 +138,8 @@ function humanCount(channel) {
 }
 
 async function handleJoin(guild, channel) {
+  // First person in an empty VC gets the full welcome; anyone after gets the short message
+  const alreadyConnected = connection && connection.state.status !== VoiceConnectionStatus.Destroyed;
   try {
     await ensureConnected(guild, channel);
   } catch (err) {
@@ -144,7 +147,7 @@ async function handleJoin(guild, channel) {
     cleanup();
     return;
   }
-  pendingWelcomes++;
+  queue.push(alreadyConnected ? 'additional' : 'first');
   // If we're not already in the middle of a welcome, interrupt the music and greet
   if (!playingWelcome) playNext();
 }
