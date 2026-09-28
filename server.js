@@ -65,6 +65,7 @@ function publicSettings() {
     welcomeMessage: s.welcomeMessage,
     musicVolume: s.musicVolume,
     welcomeVolume: s.welcomeVolume,
+    persistent: settings.PERSISTENT,
     hasMusic: !!settings.getMusicPath(),
     musicName: s.musicName || (settings.getMusicPath() ? 'Default waiting music' : null),
   };

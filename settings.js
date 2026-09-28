@@ -47,4 +47,8 @@ function getMusicPath() {
   return fs.existsSync(fallback) ? fallback : null;
 }
 
-module.exports = { get, update, getMusicPath, MUSIC_DIR, DATA_DIR };
+const PERSISTENT = !!process.env.DATA_DIR;
+console.log(`Storage: ${DATA_DIR} (${PERSISTENT ? 'permanent' : 'TEMPORARY - resets on redeploy'})`);
+console.log(`Music at startup: ${getMusicPath() || 'none found'}`);
+
+module.exports = { get, update, getMusicPath, MUSIC_DIR, DATA_DIR, PERSISTENT };
